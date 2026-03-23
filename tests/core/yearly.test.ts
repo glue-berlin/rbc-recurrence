@@ -60,8 +60,45 @@ describe('Yearly recurrence — pattern: weekday', () => {
     });
     expect(results).toHaveLength(3);
     for (const r of results) {
-      expect(r.date.getDay()).toBe(4); // Thursday
-      expect(r.date.getMonth()).toBe(10); // November
+      expect(r.date.getUTCDay()).toBe(4); // Thursday
+      expect(r.date.getUTCMonth()).toBe(10); // November
     }
+  });
+});
+
+describe('Yearly recurrence — edge cases', () => {
+  it('handles 5th weekday occurrence that does not exist in some years', () => {
+    // Start on the 5th Saturday of March 2024 (March 30)
+    // Some years won't have a 5th Saturday in March
+    const rule: RecurrenceRule = {
+      startDate: d('2024-03-30'),
+      interval: 1,
+      period: 'year',
+      end: { type: 'after', occurrences: 5 },
+      yearly: { pattern: 'weekday' },
+    };
+    const results = expand(rule, {
+      rangeStart: d('2024-01-01'),
+      rangeEnd: d('2035-12-31'),
+    });
+    // Should skip years where the 5th Saturday doesn't exist
+    for (const r of results) {
+      expect(r.date.getUTCDay()).toBe(6); // Saturday
+    }
+  });
+
+  it('end: on condition stops expansion', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-12-25'),
+      interval: 1,
+      period: 'year',
+      end: { type: 'on', date: d('2026-12-31') },
+      yearly: { pattern: 'date' },
+    };
+    const results = expand(rule, {
+      rangeStart: d('2024-01-01'),
+      rangeEnd: d('2030-12-31'),
+    });
+    expect(results).toHaveLength(3); // 2024, 2025, 2026
   });
 });

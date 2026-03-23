@@ -122,4 +122,81 @@ describe('describe()', () => {
     };
     expect(describeRule(rule)).toBe('Every week on Mon, until December 31, 2024');
   });
+
+  it('weekly with missing weekly config', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-01'),
+      interval: 1,
+      period: 'week',
+      end: { type: 'never' },
+    };
+    delete (rule as Partial<RecurrenceRule>).weekly;
+    expect(describeRule(rule)).toBe('Every week');
+  });
+
+  it('monthly with missing monthly config', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-01'),
+      interval: 1,
+      period: 'month',
+      end: { type: 'never' },
+    };
+    delete (rule as Partial<RecurrenceRule>).monthly;
+    expect(describeRule(rule)).toBe('Every month');
+  });
+
+  it('yearly with missing yearly config', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-01'),
+      interval: 1,
+      period: 'year',
+      end: { type: 'never' },
+    };
+    delete (rule as Partial<RecurrenceRule>).yearly;
+    expect(describeRule(rule)).toBe('Every year');
+  });
+
+  it('yearly weekday pattern', () => {
+    // Nov 28 2024 = 4th Thursday of November
+    const rule: RecurrenceRule = {
+      startDate: d('2024-11-28'),
+      interval: 1,
+      period: 'year',
+      end: { type: 'never' },
+      yearly: { pattern: 'weekday' },
+    };
+    expect(describeRule(rule)).toBe('Every year on the fourth Thursday of November');
+  });
+
+  it('ending after 1 occurrence (singular)', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-01'),
+      interval: 1,
+      period: 'day',
+      end: { type: 'after', occurrences: 1 },
+    };
+    expect(describeRule(rule)).toBe('Every day, ending after 1 occurrence');
+  });
+
+  it('every 3 months on day 15', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-15'),
+      interval: 3,
+      period: 'month',
+      end: { type: 'never' },
+      monthly: { pattern: 'day' },
+    };
+    expect(describeRule(rule)).toBe('Every 3 months on the 15th');
+  });
+
+  it('every 2 years', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-12-25'),
+      interval: 2,
+      period: 'year',
+      end: { type: 'never' },
+      yearly: { pattern: 'date' },
+    };
+    expect(describeRule(rule)).toBe('Every 2 years on December 25th');
+  });
 });

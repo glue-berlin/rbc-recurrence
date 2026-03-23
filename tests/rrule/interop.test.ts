@@ -73,6 +73,60 @@ describe('toRRuleString()', () => {
     };
     expect(toRRuleString(rule)).toContain('BYMONTHDAY=-1');
   });
+
+  it('monthly weekday → BYDAY with ordinal', () => {
+    // Jan 15 2024 is 3rd Monday
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-15'),
+      interval: 1,
+      period: 'month',
+      end: { type: 'never' },
+      monthly: { pattern: 'weekday' },
+    };
+    const str = toRRuleString(rule);
+    expect(str).toContain('BYDAY=3MO');
+  });
+
+  it('monthly lastWeekday → BYDAY=-1XX', () => {
+    // Jan 26 2024 is last Friday
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-26'),
+      interval: 1,
+      period: 'month',
+      end: { type: 'never' },
+      monthly: { pattern: 'lastWeekday' },
+    };
+    const str = toRRuleString(rule);
+    expect(str).toContain('BYDAY=-1FR');
+  });
+
+  it('yearly date → BYMONTH + BYMONTHDAY', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-12-25'),
+      interval: 1,
+      period: 'year',
+      end: { type: 'never' },
+      yearly: { pattern: 'date' },
+    };
+    const str = toRRuleString(rule);
+    expect(str).toContain('FREQ=YEARLY');
+    expect(str).toContain('BYMONTH=12');
+    expect(str).toContain('BYMONTHDAY=25');
+  });
+
+  it('yearly weekday → BYMONTH + BYDAY with ordinal', () => {
+    // Nov 28 2024 is 4th Thursday
+    const rule: RecurrenceRule = {
+      startDate: d('2024-11-28'),
+      interval: 1,
+      period: 'year',
+      end: { type: 'never' },
+      yearly: { pattern: 'weekday' },
+    };
+    const str = toRRuleString(rule);
+    expect(str).toContain('BYMONTH=11');
+    expect(str).toContain('BYDAY=4TH');
+  });
 });
 
 describe('fromRRuleString()', () => {
@@ -108,6 +162,57 @@ describe('fromRRuleString()', () => {
 
   it('throws on missing FREQ', () => {
     expect(() => fromRRuleString('RRULE:BYDAY=MO')).toThrow();
+  });
+
+  it('parses monthly BYMONTHDAY=-1 as lastDay', () => {
+    const rule = fromRRuleString('RRULE:FREQ=MONTHLY;BYMONTHDAY=-1');
+    expect(rule.period).toBe('month');
+    expect(rule.monthly?.pattern).toBe('lastDay');
+  });
+
+  it('parses monthly BYMONTHDAY=15 as day', () => {
+    const rule = fromRRuleString('RRULE:FREQ=MONTHLY;BYMONTHDAY=15');
+    expect(rule.period).toBe('month');
+    expect(rule.monthly?.pattern).toBe('day');
+  });
+
+  it('parses monthly BYDAY=1MO as weekday', () => {
+    const rule = fromRRuleString('RRULE:FREQ=MONTHLY;BYDAY=1MO');
+    expect(rule.period).toBe('month');
+    expect(rule.monthly?.pattern).toBe('weekday');
+  });
+
+  it('parses monthly BYDAY=-1FR as lastWeekday', () => {
+    const rule = fromRRuleString('RRULE:FREQ=MONTHLY;BYDAY=-1FR');
+    expect(rule.period).toBe('month');
+    expect(rule.monthly?.pattern).toBe('lastWeekday');
+  });
+
+  it('parses monthly without BYMONTHDAY or BYDAY as day pattern', () => {
+    const rule = fromRRuleString('RRULE:FREQ=MONTHLY');
+    expect(rule.monthly?.pattern).toBe('day');
+  });
+
+  it('throws on malformed monthly BYDAY', () => {
+    expect(() => fromRRuleString('RRULE:FREQ=MONTHLY;BYDAY=INVALID')).toThrow('Malformed');
+  });
+
+  it('parses yearly with BYDAY as weekday pattern', () => {
+    const rule = fromRRuleString('RRULE:FREQ=YEARLY;BYDAY=4TH;BYMONTH=11');
+    expect(rule.period).toBe('year');
+    expect(rule.yearly?.pattern).toBe('weekday');
+  });
+
+  it('parses yearly without BYDAY as date pattern', () => {
+    const rule = fromRRuleString('RRULE:FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=25');
+    expect(rule.period).toBe('year');
+    expect(rule.yearly?.pattern).toBe('date');
+  });
+
+  it('defaults to startDate weekday when weekly has no BYDAY', () => {
+    const rule = fromRRuleString('DTSTART:20240101T000000Z\nRRULE:FREQ=WEEKLY');
+    // Jan 1 2024 is Monday (UTC day 1)
+    expect(rule.weekly?.days).toEqual([1]);
   });
 });
 

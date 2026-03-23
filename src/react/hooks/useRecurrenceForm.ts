@@ -112,7 +112,7 @@ export function useRecurrenceForm(
     } catch {
       return '';
     }
-  }, [state, validation.valid]);
+  }, [validation, state]);
 
   return {
     rule: state,

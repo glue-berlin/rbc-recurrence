@@ -56,6 +56,27 @@ describe('MonthlyOptions', () => {
     expect(radios.length).toBeGreaterThan(0);
   });
 
+  it('shows lastDay option when startDate is last day of month', () => {
+    // Jan 31 is last day of January
+    const lastDay = new Date('2024-01-31');
+    render(
+      <MonthlyOptions startDate={lastDay} value="lastDay" onChange={() => {}} />,
+    );
+    const radios = screen.getAllByRole('radio');
+    const labels = radios.map((r) => r.closest('label')?.textContent ?? '');
+    expect(labels.some((l) => l.includes('Last day'))).toBe(true);
+  });
+
+  it('does not show day option for 31st (ambiguous)', () => {
+    const day31 = new Date('2024-01-31');
+    render(
+      <MonthlyOptions startDate={day31} value="weekday" onChange={() => {}} />,
+    );
+    const radios = screen.getAllByRole('radio');
+    const labels = radios.map((r) => r.closest('label')?.textContent ?? '');
+    expect(labels.some((l) => l.includes('Monthly on day 31'))).toBe(false);
+  });
+
   it('renders as select when asSelect=true', () => {
     render(
       <MonthlyOptions startDate={startDate} value="day" onChange={() => {}} asSelect />,
@@ -96,5 +117,139 @@ describe('RecurrenceEditor', () => {
   it('shows weekday picker for weekly period', () => {
     render(<RecurrenceEditor />);
     expect(screen.getByTestId('weekday-picker')).toBeTruthy();
+  });
+
+  it('calls onChange with rule and isValid', () => {
+    const onChange = vi.fn();
+    render(<RecurrenceEditor onChange={onChange} />);
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ period: 'week' }),
+      true,
+    );
+  });
+
+  it('shows monthly options when period is month', () => {
+    render(<RecurrenceEditor initialRule={{ period: 'month', monthly: { pattern: 'day' } }} />);
+    const select = screen.getByTestId('period-select');
+    expect(select).toHaveValue('month');
+    expect(screen.getByTestId('monthly-options-select')).toBeTruthy();
+  });
+
+  it('does not show weekday picker when period is month', () => {
+    render(<RecurrenceEditor initialRule={{ period: 'month', monthly: { pattern: 'day' } }} />);
+    expect(screen.queryByTestId('weekday-picker')).toBeNull();
+  });
+
+  it('updates interval via input', () => {
+    const onChange = vi.fn();
+    render(<RecurrenceEditor onChange={onChange} />);
+    const input = screen.getByTestId('interval-input');
+    fireEvent.change(input, { target: { value: '3' } });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ interval: 3 }),
+      expect.any(Boolean),
+    );
+  });
+
+  it('switches end type to "on" and shows date input', () => {
+    render(<RecurrenceEditor />);
+    const select = screen.getByTestId('end-type-select');
+    fireEvent.change(select, { target: { value: 'on' } });
+    expect(screen.getByTestId('end-on-input')).toBeTruthy();
+  });
+
+  it('switches end type to "after" and shows occurrences input', () => {
+    render(<RecurrenceEditor />);
+    const select = screen.getByTestId('end-type-select');
+    fireEvent.change(select, { target: { value: 'after' } });
+    expect(screen.getByTestId('end-after-input')).toBeTruthy();
+  });
+
+  it('updates end occurrences', () => {
+    const onChange = vi.fn();
+    render(<RecurrenceEditor onChange={onChange} />);
+    const endSelect = screen.getByTestId('end-type-select');
+    fireEvent.change(endSelect, { target: { value: 'after' } });
+    const input = screen.getByTestId('end-after-input');
+    fireEvent.change(input, { target: { value: '5' } });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        end: expect.objectContaining({ type: 'after', occurrences: 5 }) as unknown,
+      }),
+      expect.any(Boolean),
+    );
+  });
+
+  it('changes period selection', () => {
+    const onChange = vi.fn();
+    render(<RecurrenceEditor onChange={onChange} />);
+    const select = screen.getByTestId('period-select');
+    fireEvent.change(select, { target: { value: 'day' } });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ period: 'day' }),
+      expect.any(Boolean),
+    );
+  });
+
+  it('renders custom actions via renderActions', () => {
+    render(
+      <RecurrenceEditor
+        renderActions={({ isValid }) => (
+          <button data-testid="save-btn" disabled={!isValid}>
+            Save
+          </button>
+        )}
+      />,
+    );
+    expect(screen.getByTestId('save-btn')).toBeTruthy();
+  });
+
+  it('applies className to root', () => {
+    render(<RecurrenceEditor className="my-custom" />);
+    const root = screen.getByTestId('recurrence-editor');
+    expect(root.className).toContain('my-custom');
+  });
+
+  it('updates start date input', () => {
+    const onChange = vi.fn();
+    render(<RecurrenceEditor onChange={onChange} />);
+    const input = screen.getByTestId('start-date-input');
+    fireEvent.change(input, { target: { value: '2025-06-15' } });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startDate: expect.any(Date) as unknown,
+      }),
+      expect.any(Boolean),
+    );
+  });
+
+  it('updates end date when end type is on', () => {
+    const onChange = vi.fn();
+    render(<RecurrenceEditor onChange={onChange} />);
+    // Switch to "on" end type
+    fireEvent.change(screen.getByTestId('end-type-select'), { target: { value: 'on' } });
+    // Update end date
+    fireEvent.change(screen.getByTestId('end-on-input'), { target: { value: '2025-12-31' } });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        end: expect.objectContaining({ type: 'on' }) as unknown,
+      }),
+      expect.any(Boolean),
+    );
+  });
+
+  it('switches back to never end type', () => {
+    const onChange = vi.fn();
+    render(<RecurrenceEditor onChange={onChange} />);
+    // Switch to after first
+    fireEvent.change(screen.getByTestId('end-type-select'), { target: { value: 'after' } });
+    // Switch back to never
+    fireEvent.change(screen.getByTestId('end-type-select'), { target: { value: 'never' } });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        end: expect.objectContaining({ type: 'never' }) as unknown,
+      }),
+      expect.any(Boolean),
+    );
   });
 });

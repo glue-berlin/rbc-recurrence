@@ -19,7 +19,7 @@ function parseICalDate(str: string): Date {
   const year = parseInt(clean.slice(0, 4), 10);
   const month = parseInt(clean.slice(4, 6), 10) - 1;
   const day = parseInt(clean.slice(6, 8), 10);
-  return new Date(year, month, day);
+  return new Date(Date.UTC(year, month, day));
 }
 
 /**
@@ -33,8 +33,8 @@ function parseICalDate(str: string): Date {
 export function fromRRuleString(input: string): RecurrenceRule {
   const lines = input.trim().split(/\r?\n/);
 
-  let startDate = new Date();
-  startDate.setHours(0, 0, 0, 0);
+  const now = new Date();
+  let startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   let rruleLine = '';
 
   for (const line of lines) {
@@ -87,7 +87,7 @@ export function fromRRuleString(input: string): RecurrenceRule {
     const byday = params['BYDAY'];
     const days = byday
       ? byday.split(',').map((d) => BYDAY_TO_INDEX[d] ?? -1).filter((d) => d >= 0)
-      : [startDate.getDay()];
+      : [startDate.getUTCDay()];
     weekly = { days };
   }
 
@@ -106,7 +106,7 @@ export function fromRRuleString(input: string): RecurrenceRule {
         const pattern: MonthlyPattern = ordinal === -1 ? 'lastWeekday' : 'weekday';
         monthly = { pattern };
       } else {
-        monthly = { pattern: 'weekday' };
+        throw new Error(`Malformed monthly BYDAY value: ${byday}`);
       }
     } else {
       monthly = { pattern: 'day' };

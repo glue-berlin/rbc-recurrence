@@ -12,7 +12,7 @@
  * />
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { useRecurrenceForm } from '../hooks/useRecurrenceForm.js';
 import { WeekdayPicker } from './WeekdayPicker.js';
 import { MonthlyOptions } from './MonthlyOptions.js';
@@ -62,14 +62,21 @@ export function RecurrenceEditor({
   className,
   renderActions,
 }: RecurrenceEditorProps) {
-  const { rule, setField, isValid, validation, description } = useRecurrenceForm(
-    initialRule ? { initialRule } : {},
+  const formOptions = useMemo(
+    () => (initialRule ? { initialRule } : {}),
+    [initialRule],
   );
+  const { rule, setField, isValid, validation, description } = useRecurrenceForm(formOptions);
+
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const onValidChangeRef = useRef(onValidChange);
+  onValidChangeRef.current = onValidChange;
 
   useEffect(() => {
-    onChange?.(rule, isValid);
-    if (isValid) onValidChange?.(rule as RecurrenceRule);
-  }, [rule, isValid]); // onChange/onValidChange intentionally omitted — callers should stabilise refs
+    onChangeRef.current?.(rule, isValid);
+    if (isValid) onValidChangeRef.current?.(rule as RecurrenceRule);
+  }, [rule, isValid]);
 
   const startDate = rule.startDate ?? new Date();
 
@@ -86,7 +93,7 @@ export function RecurrenceEditor({
           className="rbc-recurrence-input"
           value={startDate.toISOString().slice(0, 10)}
           onChange={(e) => {
-            const d = new Date(e.target.value);
+            const d = new Date(e.target.value + 'T00:00:00Z');
             if (!isNaN(d.getTime())) setField('startDate', d);
           }}
           data-testid="start-date-input"
@@ -156,7 +163,10 @@ export function RecurrenceEditor({
           onChange={(e) => {
             const t = e.target.value as RecurrenceRule['end']['type'];
             if (t === 'never') setField('end', { type: 'never' });
-            else if (t === 'on') setField('end', { type: 'on', date: new Date() });
+            else if (t === 'on') {
+              const now = new Date();
+              setField('end', { type: 'on', date: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())) });
+            }
             else if (t === 'after') setField('end', { type: 'after', occurrences: 10 });
           }}
           data-testid="end-type-select"
@@ -178,7 +188,7 @@ export function RecurrenceEditor({
             className="rbc-recurrence-input"
             value={(rule.end.date ?? new Date()).toISOString().slice(0, 10)}
             onChange={(e) => {
-              const d = new Date(e.target.value);
+              const d = new Date(e.target.value + 'T00:00:00Z');
               if (!isNaN(d.getTime())) setField('end', { type: 'on', date: d });
             }}
             data-testid="end-on-input"

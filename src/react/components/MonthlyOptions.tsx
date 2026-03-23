@@ -11,7 +11,7 @@
  * //  ○ Monthly on the third Friday
  */
 
-import React, { useMemo } from 'react';
+import React, { useId, useMemo } from 'react';
 import type { MonthlyPattern } from '../../core/types.js';
 import { getOrdinalIndex } from '../../core/utils/date.js';
 
@@ -77,6 +77,7 @@ export function MonthlyOptions({
   asSelect = false,
 }: MonthlyOptionsProps) {
   const options = useMemo(() => buildOptions(startDate), [startDate]);
+  const groupId = useId();
 
   if (asSelect) {
     return (
@@ -113,7 +114,7 @@ export function MonthlyOptions({
         >
           <input
             type="radio"
-            name="monthly-pattern"
+            name={`monthly-pattern-${groupId}`}
             value={opt.value}
             checked={value === opt.value}
             onChange={() => onChange(opt.value)}

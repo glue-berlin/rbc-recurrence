@@ -135,8 +135,8 @@ export function ordinalWeekdayInMonth(
     const candidate = new Date(Date.UTC(year, month, day));
     if (candidate.getUTCDay() === weekday) days.push(candidate);
   }
-  const idx = Math.min(ordinalIndex, days.length - 1);
-  return days[idx] ?? null;
+  if (ordinalIndex >= days.length) return null;
+  return days[ordinalIndex] ?? null;
 }
 
 /** Returns the last occurrence of a weekday within a month (UTC). */

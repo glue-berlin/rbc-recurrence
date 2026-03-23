@@ -14,7 +14,7 @@
  * ```
  */
 
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { expand } from '../../core/expand.js';
 import { setTimeOfDay, addDays } from '../../core/utils/date.js';
 import type { RecurringEvent, RBCEvent, ExpandOptions } from '../../core/types.js';
@@ -26,7 +26,7 @@ export interface UseRecurringEventsOptions<TData> {
    * Non-recurring events to mix into the output unchanged.
    * They must already have `start` and `end` fields.
    */
-  oneTimeEvents?: (TData & { start: Date; end: Date })[]; // eslint-disable-line @typescript-eslint/no-explicit-any
+  oneTimeEvents?: (TData & { start: Date; end: Date })[];
   /**
    * Buffer in days added to each side of the visible range before expanding.
    * Prevents flicker when the user navigates by a few days.
@@ -77,10 +77,6 @@ export function useRecurringEvents<TData = Record<string, unknown>>(
     setVisibleRange(normaliseRange(range));
   }, []);
 
-  // Keep a stable ref to recurring events to avoid unnecessary re-expansions
-  const recurringEventsRef = useRef(recurringEvents);
-  recurringEventsRef.current = recurringEvents;
-
   const expandedEvents = useMemo(() => {
     const rangeStart = addDays(visibleRange.start, -bufferDays);
     const rangeEnd = addDays(visibleRange.end, bufferDays);
@@ -89,7 +85,7 @@ export function useRecurringEvents<TData = Record<string, unknown>>(
 
     const results: RBCEvent<TData>[] = [];
 
-    for (const recurringEvent of recurringEventsRef.current) {
+    for (const recurringEvent of recurringEvents) {
       const occurrences = expand(recurringEvent.rule, expandOptions);
 
       for (const occurrence of occurrences) {
@@ -101,10 +97,10 @@ export function useRecurringEvents<TData = Record<string, unknown>>(
           end = setTimeOfDay(occurrence.date, recurringEvent.schedule.endTime);
         } else {
           start = new Date(occurrence.date);
-          end = addDays(occurrence.date, Math.ceil(recurringEvent.durationMinutes / (60 * 24)));
           if (recurringEvent.durationMinutes < 1440) {
-            // sub-day event: set end by adding minutes
             end = new Date(start.getTime() + recurringEvent.durationMinutes * 60 * 1000);
+          } else {
+            end = addDays(occurrence.date, Math.ceil(recurringEvent.durationMinutes / 1440));
           }
         }
 
@@ -120,7 +116,7 @@ export function useRecurringEvents<TData = Record<string, unknown>>(
     }
 
     return results;
-  }, [visibleRange, bufferDays, maxOccurrences]);
+  }, [visibleRange, bufferDays, maxOccurrences, recurringEvents]);
 
   const events = useMemo(
     () => [...expandedEvents, ...oneTimeEvents],

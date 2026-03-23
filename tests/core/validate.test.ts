@@ -71,4 +71,87 @@ describe('validate()', () => {
     };
     expect(validate(rule).valid).toBe(false);
   });
+
+  it('errors when weekly.days contains index > 6', () => {
+    const result = validate({ ...valid, weekly: { days: [1, 7] } });
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('weekly.days'))).toBe(true);
+  });
+
+  it('errors when weekly.days contains negative index', () => {
+    const result = validate({ ...valid, weekly: { days: [-1] } });
+    expect(result.valid).toBe(false);
+  });
+
+  it('errors when weekly.days contains non-integer', () => {
+    const result = validate({ ...valid, weekly: { days: [1.5] } });
+    expect(result.valid).toBe(false);
+  });
+
+  it('errors when monthly.pattern is invalid', () => {
+    const rule = {
+      startDate: d('2024-01-15'),
+      interval: 1,
+      period: 'month' as const,
+      end: { type: 'never' as const },
+      monthly: { pattern: 'invalid' as 'day' },
+    };
+    const result = validate(rule);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('monthly.pattern'))).toBe(true);
+  });
+
+  it('errors when yearly config is missing for period=year', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-01'),
+      interval: 1,
+      period: 'year',
+      end: { type: 'never' },
+    };
+    delete (rule as Partial<RecurrenceRule>).yearly;
+    const result = validate(rule);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('yearly'))).toBe(true);
+  });
+
+  it('errors when yearly.pattern is invalid', () => {
+    const rule = {
+      startDate: d('2024-01-01'),
+      interval: 1,
+      period: 'year' as const,
+      end: { type: 'never' as const },
+      yearly: { pattern: 'invalid' as 'date' },
+    };
+    const result = validate(rule);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('yearly.pattern'))).toBe(true);
+  });
+
+  it('passes for valid yearly rule', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-03-15'),
+      interval: 1,
+      period: 'year',
+      end: { type: 'never' },
+      yearly: { pattern: 'date' },
+    };
+    expect(validate(rule).valid).toBe(true);
+  });
+
+  it('errors on end: on with invalid date', () => {
+    const rule: RecurrenceRule = {
+      ...valid,
+      end: { type: 'on', date: new Date('bad') },
+    };
+    const result = validate(rule);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('end.date'))).toBe(true);
+  });
+
+  it('errors on invalid period', () => {
+    const rule = { ...valid, period: 'hourly' as 'day' };
+    const result = validate(rule);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('period'))).toBe(true);
+  });
 });

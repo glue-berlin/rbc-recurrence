@@ -10,6 +10,7 @@
 import React from 'react';
 
 const DEFAULT_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export interface WeekdayPickerProps {
   /** Currently selected weekday indices (0=Sun … 6=Sat). */
@@ -79,7 +80,7 @@ export function WeekdayPicker({
             type="button"
             role="checkbox"
             aria-checked={isSelected}
-            aria-label={`${isSelected ? 'Deselect' : 'Select'} day ${index}`}
+            aria-label={`${isSelected ? 'Deselect' : 'Select'} ${DAY_NAMES[index] ?? ''}`}
             className={cls}
             onClick={() => toggle(index)}
             disabled={disabled}

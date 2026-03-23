@@ -58,19 +58,19 @@ export function toRRuleString(rule: RecurrenceRule): string {
   if (rule.period === 'month' && rule.monthly) {
     switch (rule.monthly.pattern) {
       case 'day':
-        parts.push(`BYMONTHDAY=${rule.startDate.getDate()}`);
+        parts.push(`BYMONTHDAY=${rule.startDate.getUTCDate()}`);
         break;
       case 'lastDay':
         parts.push('BYMONTHDAY=-1');
         break;
       case 'weekday': {
-        const ordinal = Math.floor((rule.startDate.getDate() - 1) / 7) + 1;
-        const day = BYDAY_MAP[rule.startDate.getDay()] ?? 'MO';
+        const ordinal = Math.floor((rule.startDate.getUTCDate() - 1) / 7) + 1;
+        const day = BYDAY_MAP[rule.startDate.getUTCDay()] ?? 'MO';
         parts.push(`BYDAY=${ordinal}${day}`);
         break;
       }
       case 'lastWeekday': {
-        const day = BYDAY_MAP[rule.startDate.getDay()] ?? 'MO';
+        const day = BYDAY_MAP[rule.startDate.getUTCDay()] ?? 'MO';
         parts.push(`BYDAY=-1${day}`);
         break;
       }
@@ -78,13 +78,13 @@ export function toRRuleString(rule: RecurrenceRule): string {
   }
 
   if (rule.period === 'year' && rule.yearly) {
-    parts.push(`BYMONTH=${rule.startDate.getMonth() + 1}`);
+    parts.push(`BYMONTH=${rule.startDate.getUTCMonth() + 1}`);
     if (rule.yearly.pattern === 'weekday') {
-      const ordinal = Math.floor((rule.startDate.getDate() - 1) / 7) + 1;
-      const day = BYDAY_MAP[rule.startDate.getDay()] ?? 'MO';
+      const ordinal = Math.floor((rule.startDate.getUTCDate() - 1) / 7) + 1;
+      const day = BYDAY_MAP[rule.startDate.getUTCDay()] ?? 'MO';
       parts.push(`BYDAY=${ordinal}${day}`);
     } else {
-      parts.push(`BYMONTHDAY=${rule.startDate.getDate()}`);
+      parts.push(`BYMONTHDAY=${rule.startDate.getUTCDate()}`);
     }
   }
 

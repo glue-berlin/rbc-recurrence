@@ -26,7 +26,7 @@ export function expandDaily(
     cur = addDays(cur, stepsToSkip * interval);
   }
 
-  let occurrenceIndex = Math.round(
+  let occurrenceIndex = Math.floor(
     (cur.getTime() - startOfDay(startDate).getTime()) / (msPerDay * interval),
   );
 

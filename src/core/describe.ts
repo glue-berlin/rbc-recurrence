@@ -36,7 +36,7 @@ function describeEnd(rule: RecurrenceRule): string {
     return `, ending after ${rule.end.occurrences} occurrence${rule.end.occurrences === 1 ? '' : 's'}`;
   if (rule.end.type === 'on') {
     const d = rule.end.date;
-    return `, until ${MONTH_NAMES[d.getMonth()] ?? ''} ${d.getDate()}, ${d.getFullYear()}`;
+    return `, until ${MONTH_NAMES[d.getUTCMonth()] ?? ''} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
   }
   return '';
 }
