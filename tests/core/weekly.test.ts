@@ -130,4 +130,69 @@ describe('Weekly recurrence', () => {
       expect(results[i]!.occurrenceIndex).toBeGreaterThan(results[i - 1]!.occurrenceIndex);
     }
   });
+
+  it('occurrenceIndex is correct after fast-forward for far-future range', () => {
+    // Every week on Mon starting Jan 1 2024 (which is a Monday)
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-01'),
+      interval: 1,
+      period: 'week',
+      end: { type: 'never' },
+      weekly: { days: [1] }, // Monday only
+    };
+
+    // Query a range far in the future — triggers fast-forward
+    const results = expand(rule, {
+      rangeStart: d('2025-01-01'),
+      rangeEnd: d('2025-01-31'),
+    });
+
+    // Jan 1 2024 to Jan 1 2025 ≈ 52 weeks = 52 Mondays
+    // First result should have occurrenceIndex ≈ 52, not 0
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0]!.occurrenceIndex).toBeGreaterThanOrEqual(52);
+  });
+
+  it('occurrenceIndex accounts for partial first week', () => {
+    // Start on Wednesday, recur on Mon/Wed/Fri
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-03'), // Wednesday
+      interval: 1,
+      period: 'week',
+      end: { type: 'never' },
+      weekly: { days: [1, 3, 5] }, // Mon, Wed, Fri
+    };
+
+    // First week: only Wed(3) and Fri(5) count (Mon is before startDate)
+    // So first week = 2 occurrences, subsequent weeks = 3 each
+    const results = expand(rule, {
+      rangeStart: d('2024-01-03'),
+      rangeEnd: d('2024-01-12'),
+    });
+
+    // Jan 3 (Wed) = index 0, Jan 5 (Fri) = index 1
+    // Jan 8 (Mon) = index 2, Jan 10 (Wed) = index 3, Jan 12 (Fri) = index 4
+    expect(results[0]!.occurrenceIndex).toBe(0);
+    expect(results[1]!.occurrenceIndex).toBe(1);
+    expect(results[2]!.occurrenceIndex).toBe(2);
+  });
+
+  it('end: after respects correct count with fast-forward', () => {
+    // Every week on Mon, only 5 occurrences
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-01'),
+      interval: 1,
+      period: 'week',
+      end: { type: 'after', occurrences: 5 },
+      weekly: { days: [1] },
+    };
+
+    // Query far future — should return 0 results since all 5 occurred in Jan/Feb 2024
+    const results = expand(rule, {
+      rangeStart: d('2025-01-01'),
+      rangeEnd: d('2025-12-31'),
+    });
+
+    expect(results).toHaveLength(0);
+  });
 });

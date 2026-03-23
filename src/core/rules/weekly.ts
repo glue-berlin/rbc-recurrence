@@ -40,7 +40,16 @@ export function expandWeekly(
       Math.floor((rangeStart.getTime() - cur.getTime()) / msPerDay) - 7,
     );
     const safeSkipWeeks = Math.floor(daysToRange / (7 * interval)) * interval;
-    cur = addDays(cur, safeSkipWeeks * 7);
+    if (safeSkipWeeks > 0) {
+      cur = addDays(cur, safeSkipWeeks * 7);
+      // Account for occurrences skipped by fast-forward.
+      // First interval may be partial (only days >= startDate's weekday count).
+      const intervalsSkipped = safeSkipWeeks / interval;
+      const startDow = startDate.getUTCDay();
+      const daysInFirstInterval = weekly.days.filter((d) => d >= startDow).length;
+      occurrenceIndex =
+        daysInFirstInterval + Math.max(0, intervalsSkipped - 1) * weekly.days.length;
+    }
   }
 
   let safetyCounter = 0;
