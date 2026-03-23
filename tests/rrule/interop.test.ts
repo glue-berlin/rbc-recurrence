@@ -147,8 +147,8 @@ describe('fromRRuleString()', () => {
     const rule = fromRRuleString('RRULE:FREQ=DAILY;UNTIL=20241231T000000Z');
     expect(rule.end.type).toBe('on');
     if (rule.end.type === 'on') {
-      expect(rule.end.date.getFullYear()).toBe(2024);
-      expect(rule.end.date.getMonth()).toBe(11); // December
+      expect(rule.end.date.getUTCFullYear()).toBe(2024);
+      expect(rule.end.date.getUTCMonth()).toBe(11); // December
     }
   });
 

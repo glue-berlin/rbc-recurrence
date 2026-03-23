@@ -116,7 +116,7 @@ describe('Weekly recurrence', () => {
     });
     // All results should be Mondays
     for (const r of results) {
-      expect(r.date.getDay()).toBe(1);
+      expect(r.date.getUTCDay()).toBe(1);
     }
     expect(results.length).toBeGreaterThan(0);
   });

@@ -45,7 +45,7 @@ export function expandWeekly(
 
   let safetyCounter = 0;
 
-  while (!isAfterDay(cur, rangeEnd) && safetyCounter < maxOccurrences * 10) {
+  while (!isAfterDay(cur, rangeEnd) && safetyCounter < maxOccurrences) {
     safetyCounter++;
 
     if (end.type === 'after' && occurrenceIndex >= end.occurrences) break;
@@ -65,15 +65,13 @@ export function expandWeekly(
         (isSameDay(cur, rangeStart) || isAfterDay(cur, rangeStart)) &&
         (isSameDay(cur, rangeEnd) || !isAfterDay(cur, rangeEnd));
 
-      if (!excludeSet.has(toDateKey(cur))) {
-        if (inRange) {
-          results.push({
-            date: new Date(cur),
-            occurrenceIndex: occurrenceCountBefore + occurrenceIndex,
-          });
-        }
-        occurrenceIndex++;
+      if (inRange && !excludeSet.has(toDateKey(cur))) {
+        results.push({
+          date: new Date(cur),
+          occurrenceIndex: occurrenceCountBefore + occurrenceIndex,
+        });
       }
+      occurrenceIndex++;
     }
 
     cur = addDays(cur, 1);

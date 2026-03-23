@@ -109,7 +109,7 @@ describe('Monthly recurrence — pattern: weekday (Nth weekday)', () => {
     });
     // Verify all results are Mondays
     for (const r of results) {
-      expect(r.date.getDay()).toBe(1);
+      expect(r.date.getUTCDay()).toBe(1);
     }
     expect(results.length).toBe(4);
   });
@@ -124,10 +124,10 @@ describe('Monthly recurrence — pattern: weekday (Nth weekday)', () => {
       rangeEnd: d('2024-03-31'),
     });
     for (const r of results) {
-      expect(r.date.getDay()).toBe(3); // Wednesday
+      expect(r.date.getUTCDay()).toBe(3); // Wednesday
       // Verify it's the 3rd Wednesday (day 15-21)
-      expect(r.date.getDate()).toBeGreaterThanOrEqual(15);
-      expect(r.date.getDate()).toBeLessThanOrEqual(21);
+      expect(r.date.getUTCDate()).toBeGreaterThanOrEqual(15);
+      expect(r.date.getUTCDate()).toBeLessThanOrEqual(21);
     }
   });
 });
@@ -148,7 +148,7 @@ describe('Monthly recurrence — pattern: lastWeekday', () => {
       rangeEnd: d('2024-04-30'),
     });
     for (const r of results) {
-      expect(r.date.getDay()).toBe(5); // Friday
+      expect(r.date.getUTCDay()).toBe(5); // Friday
     }
     expect(results.length).toBe(4);
   });
