@@ -1,0 +1,138 @@
+/**
+ * Optional default styles for rbc-recurrence components.
+ * Import with: import 'rbc-recurrence/react/styles.css'  (or from your entry)
+ *
+ * All classes are prefixed with `rbc-recurrence-` to avoid collisions.
+ * Override freely — these are low-specificity defaults.
+ */
+
+/* ── Editor container ───────────────────────────────────────────────────────── */
+.rbc-recurrence-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.rbc-recurrence-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rbc-recurrence-field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.rbc-recurrence-label {
+  font-weight: 500;
+  color: #374151;
+}
+
+.rbc-recurrence-input {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+}
+
+.rbc-recurrence-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.rbc-recurrence-input--number {
+  width: 64px;
+  text-align: center;
+}
+
+.rbc-recurrence-select {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+  cursor: pointer;
+}
+
+/* ── Weekday Picker ─────────────────────────────────────────────────────────── */
+.rbc-recurrence-weekday-picker {
+  display: flex;
+  gap: 4px;
+}
+
+.rbc-recurrence-day-btn {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d1d5db;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.rbc-recurrence-day-btn:hover:not(:disabled) {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
+.rbc-recurrence-day-btn--selected {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: #fff;
+}
+
+.rbc-recurrence-day-btn--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Monthly Options ────────────────────────────────────────────────────────── */
+.rbc-recurrence-monthly-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rbc-recurrence-monthly-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.rbc-recurrence-monthly-select {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+}
+
+/* ── Validation & Description ───────────────────────────────────────────────── */
+.rbc-recurrence-errors {
+  margin: 0;
+  padding: 0 0 0 16px;
+  color: #dc2626;
+  font-size: 13px;
+}
+
+.rbc-recurrence-description {
+  margin: 0;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  color: #166534;
+  font-size: 13px;
+}

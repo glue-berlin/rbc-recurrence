@@ -1,0 +1,12 @@
+src
+tests
+examples
+docs
+.github
+*.config.ts
+*.config.cjs
+tsconfig*.json
+.eslintrc.cjs
+.prettierrc
+coverage
+node_modules
