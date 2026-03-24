@@ -138,7 +138,7 @@ export default function App() {
       {/* Header */}
       <div className="header">
         <h1>rbc-recurrence</h1>
-        <a href="https://github.com/YOUR_USERNAME/rbc-recurrence" target="_blank" rel="noreferrer">
+        <a href="https://github.com/glue-berlin/rbc-recurrence" target="_blank" rel="noreferrer">
           GitHub ↗
         </a>
         <a href="https://www.npmjs.com/package/rbc-recurrence" target="_blank" rel="noreferrer">

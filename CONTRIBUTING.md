@@ -5,7 +5,7 @@ Thank you for considering a contribution!
 ## Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/rbc-recurrence
+git clone https://github.com/glue-berlin/rbc-recurrence
 cd rbc-recurrence
 npm install
 ```
