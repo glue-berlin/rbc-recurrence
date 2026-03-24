@@ -60,12 +60,14 @@
 }
 
 /* ── Weekday Picker ─────────────────────────────────────────────────────────── */
-.rbc-recurrence-weekday-picker {
-  display: flex;
-  gap: 4px;
-}
+/* No layout on .rbc-recurrence-weekday-picker — consumers choose their own
+   (flex, grid, inline, etc.). The buttons are inline-flex by default so they
+   sit side-by-side naturally. */
 
 .rbc-recurrence-day-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 34px;
   height: 34px;
   border: 1px solid #d1d5db;
@@ -75,9 +77,6 @@
   font-size: 12px;
   font-weight: 500;
   color: #374151;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
