@@ -88,6 +88,44 @@ describe('Edge cases', () => {
     expect(results).toHaveLength(0);
   });
 
+  it('respects excludeDates on the rule itself', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-01'),
+      interval: 1,
+      period: 'day',
+      end: { type: 'after', occurrences: 7 },
+      excludeDates: [d('2024-01-03'), d('2024-01-05')],
+    };
+    const results = expand(rule, {
+      rangeStart: d('2024-01-01'),
+      rangeEnd: d('2024-01-31'),
+    });
+    const dates = results.map((r) => r.date.toISOString().slice(0, 10));
+    expect(dates).not.toContain('2024-01-03');
+    expect(dates).not.toContain('2024-01-05');
+    expect(dates).toContain('2024-01-01');
+    expect(dates).toContain('2024-01-02');
+    expect(dates).toContain('2024-01-04');
+  });
+
+  it('merges rule excludeDates with options excludeDates', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-01'),
+      interval: 1,
+      period: 'day',
+      end: { type: 'after', occurrences: 7 },
+      excludeDates: [d('2024-01-03')],
+    };
+    const results = expand(rule, {
+      rangeStart: d('2024-01-01'),
+      rangeEnd: d('2024-01-31'),
+      excludeDates: [d('2024-01-05')],
+    });
+    const dates = results.map((r) => r.date.toISOString().slice(0, 10));
+    expect(dates).not.toContain('2024-01-03');
+    expect(dates).not.toContain('2024-01-05');
+  });
+
   it('5 years of daily recurrence completes in < 100ms', () => {
     const rule: RecurrenceRule = {
       startDate: d('2020-01-01'),

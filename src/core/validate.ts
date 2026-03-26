@@ -26,6 +26,8 @@ export function validate(rule: RecurrenceRule): ValidationResult {
     if (rule.end.type === 'on') {
       if (!(rule.end.date instanceof Date) || isNaN(rule.end.date.getTime())) {
         errors.push('end.date must be a valid Date when end.type is "on"');
+      } else if (rule.startDate instanceof Date && !isNaN(rule.startDate.getTime()) && rule.end.date <= rule.startDate) {
+        errors.push('end.date must be after startDate');
       }
     }
     if (rule.end.type === 'after') {

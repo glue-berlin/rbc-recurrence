@@ -55,6 +55,11 @@ export interface RecurrenceRule {
   weekly?: WeeklyConfig;
   monthly?: MonthlyConfig;
   yearly?: YearlyConfig;
+  /**
+   * Dates to exclude from expansion (e.g. deleted single occurrences).
+   * Persisted through RRULE round-trip as EXDATE lines.
+   */
+  excludeDates?: Date[];
 }
 
 // ─── Expansion ───────────────────────────────────────────────────────────────
@@ -108,6 +113,11 @@ export interface RecurringEvent<TData = Record<string, unknown>> {
     startTime: string;
     endTime: string;
   };
+  /**
+   * Dates to exclude from this event's expansion.
+   * Takes precedence over rule.excludeDates.
+   */
+  excludeDates?: Date[];
 }
 
 /**

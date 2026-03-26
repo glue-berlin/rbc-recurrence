@@ -96,5 +96,13 @@ export function toRRuleString(rule: RecurrenceRule): string {
   }
 
   const dtstart = `DTSTART:${toICalDate(rule.startDate)}`;
-  return `${dtstart}\nRRULE:${parts.join(';')}`;
+  let result = `${dtstart}\nRRULE:${parts.join(';')}`;
+
+  // EXDATE — excluded dates (RFC 5545)
+  if (rule.excludeDates && rule.excludeDates.length > 0) {
+    const exdates = rule.excludeDates.map(toICalDate).join(',');
+    result += `\nEXDATE:${exdates}`;
+  }
+
+  return result;
 }

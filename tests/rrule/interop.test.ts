@@ -214,6 +214,81 @@ describe('fromRRuleString()', () => {
     // Jan 1 2024 is Monday (UTC day 1)
     expect(rule.weekly?.days).toEqual([1]);
   });
+
+  it('parses DTSTART with TZID parameter', () => {
+    const rule = fromRRuleString(
+      'DTSTART;TZID=America/New_York:20240601T090000\nRRULE:FREQ=DAILY',
+    );
+    expect(rule.startDate.getUTCFullYear()).toBe(2024);
+    expect(rule.startDate.getUTCMonth()).toBe(5); // June
+    expect(rule.startDate.getUTCDate()).toBe(1);
+  });
+
+  it('parses DTSTART with VALUE=DATE parameter', () => {
+    const rule = fromRRuleString(
+      'DTSTART;VALUE=DATE:20240315\nRRULE:FREQ=WEEKLY;BYDAY=FR',
+    );
+    expect(rule.startDate.getUTCFullYear()).toBe(2024);
+    expect(rule.startDate.getUTCMonth()).toBe(2); // March
+    expect(rule.startDate.getUTCDate()).toBe(15);
+  });
+});
+
+describe('EXDATE serialization', () => {
+  it('toRRuleString serializes excludeDates as EXDATE', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-01'),
+      interval: 1,
+      period: 'day',
+      end: { type: 'never' },
+      excludeDates: [d('2024-01-05'), d('2024-01-10')],
+    };
+    const str = toRRuleString(rule);
+    expect(str).toContain('EXDATE:');
+    expect(str).toContain('20240105');
+    expect(str).toContain('20240110');
+  });
+
+  it('toRRuleString omits EXDATE when no excludeDates', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-01'),
+      interval: 1,
+      period: 'day',
+      end: { type: 'never' },
+    };
+    expect(toRRuleString(rule)).not.toContain('EXDATE');
+  });
+
+  it('fromRRuleString parses EXDATE line', () => {
+    const rule = fromRRuleString(
+      'DTSTART:20240101T000000Z\nRRULE:FREQ=DAILY\nEXDATE:20240105T000000Z,20240110T000000Z',
+    );
+    expect(rule.excludeDates).toHaveLength(2);
+    expect(rule.excludeDates![0]!.getUTCDate()).toBe(5);
+    expect(rule.excludeDates![1]!.getUTCDate()).toBe(10);
+  });
+
+  it('fromRRuleString returns no excludeDates when no EXDATE', () => {
+    const rule = fromRRuleString('RRULE:FREQ=DAILY');
+    expect(rule.excludeDates).toBeUndefined();
+  });
+
+  it('EXDATE round-trip preserves excluded dates', () => {
+    const original: RecurrenceRule = {
+      startDate: d('2024-01-01'),
+      interval: 1,
+      period: 'day',
+      end: { type: 'after', occurrences: 10 },
+      excludeDates: [d('2024-01-03'), d('2024-01-07')],
+    };
+    const parsed = fromRRuleString(toRRuleString(original));
+    const opts = { rangeStart: d('2024-01-01'), rangeEnd: d('2024-01-31') };
+    const originalDates = expand(original, opts).map((r) => r.date.toISOString().slice(0, 10));
+    const parsedDates = expand(parsed, opts).map((r) => r.date.toISOString().slice(0, 10));
+    expect(parsedDates).toEqual(originalDates);
+    expect(originalDates).not.toContain('2024-01-03');
+    expect(originalDates).not.toContain('2024-01-07');
+  });
 });
 
 describe('Round-trip: toRRuleString → fromRRuleString → expand', () => {

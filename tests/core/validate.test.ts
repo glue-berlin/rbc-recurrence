@@ -154,4 +154,34 @@ describe('validate()', () => {
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes('period'))).toBe(true);
   });
+
+  it('errors when end.date is before startDate', () => {
+    const rule: RecurrenceRule = {
+      ...valid,
+      startDate: d('2024-06-01'),
+      end: { type: 'on', date: d('2024-01-01') },
+    };
+    const result = validate(rule);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('end.date must be after startDate'))).toBe(true);
+  });
+
+  it('errors when end.date equals startDate', () => {
+    const rule: RecurrenceRule = {
+      ...valid,
+      startDate: d('2024-06-01'),
+      end: { type: 'on', date: d('2024-06-01') },
+    };
+    const result = validate(rule);
+    expect(result.valid).toBe(false);
+  });
+
+  it('passes when end.date is after startDate', () => {
+    const rule: RecurrenceRule = {
+      ...valid,
+      startDate: d('2024-01-01'),
+      end: { type: 'on', date: d('2024-12-31') },
+    };
+    expect(validate(rule).valid).toBe(true);
+  });
 });

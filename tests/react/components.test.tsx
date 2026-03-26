@@ -3,7 +3,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { WeekdayPicker } from '../../src/react/components/WeekdayPicker.js';
 import { MonthlyOptions } from '../../src/react/components/MonthlyOptions.js';
+import { YearlyOptions } from '../../src/react/components/YearlyOptions.js';
 import { RecurrenceEditor } from '../../src/react/components/RecurrenceEditor.js';
+import { ActiveRules } from '../../src/react/components/ActiveRules.js';
+import type { ActiveRulesItem } from '../../src/react/components/ActiveRules.js';
 
 describe('WeekdayPicker', () => {
   it('renders 7 buttons', () => {
@@ -95,6 +98,124 @@ describe('MonthlyOptions', () => {
   });
 });
 
+describe('YearlyOptions', () => {
+  const startDate = new Date('2024-11-28'); // 4th Thursday of November
+
+  it('renders options as radio buttons by default', () => {
+    render(
+      <YearlyOptions startDate={startDate} value="date" onChange={() => {}} />,
+    );
+    const radios = screen.getAllByRole('radio');
+    expect(radios).toHaveLength(2);
+  });
+
+  it('shows date and weekday options', () => {
+    render(
+      <YearlyOptions startDate={startDate} value="date" onChange={() => {}} />,
+    );
+    const radios = screen.getAllByRole('radio');
+    const labels = radios.map((r) => r.closest('label')?.textContent ?? '');
+    expect(labels.some((l) => l.includes('November 28'))).toBe(true);
+    expect(labels.some((l) => l.includes('fourth Thursday'))).toBe(true);
+  });
+
+  it('renders as select when asSelect=true', () => {
+    render(
+      <YearlyOptions startDate={startDate} value="date" onChange={() => {}} asSelect />,
+    );
+    expect(screen.getByTestId('yearly-options-select')).toBeTruthy();
+  });
+
+  it('calls onChange when a pattern is selected', () => {
+    const onChange = vi.fn();
+    render(
+      <YearlyOptions startDate={startDate} value="date" onChange={onChange} />,
+    );
+    const radios = screen.getAllByRole('radio');
+    fireEvent.click(radios[1]!);
+    expect(onChange).toHaveBeenCalledWith('weekday');
+  });
+});
+
+describe('ActiveRules', () => {
+  const items: ActiveRulesItem[] = [
+    {
+      id: 'standup',
+      title: 'Daily Standup',
+      rule: {
+        startDate: new Date('2024-01-01'),
+        interval: 1,
+        period: 'week',
+        end: { type: 'never' },
+        weekly: { days: [1, 2, 3, 4, 5] },
+      },
+      color: '#6366f1',
+    },
+    {
+      id: 'review',
+      title: 'Sprint Review',
+      rule: {
+        startDate: new Date('2024-01-01'),
+        interval: 2,
+        period: 'week',
+        end: { type: 'never' },
+        weekly: { days: [5] },
+      },
+    },
+  ];
+
+  it('renders all items with titles and descriptions', () => {
+    render(<ActiveRules items={items} />);
+    expect(screen.getByText('Daily Standup')).toBeTruthy();
+    expect(screen.getByText('Sprint Review')).toBeTruthy();
+    expect(screen.getByTestId('active-rules-item-standup')).toBeTruthy();
+    expect(screen.getByTestId('active-rules-item-review')).toBeTruthy();
+  });
+
+  it('calls onRemove(id) when remove button clicked', () => {
+    const onRemove = vi.fn();
+    render(<ActiveRules items={items} onRemove={onRemove} />);
+    fireEvent.click(screen.getByTestId('active-rules-remove-standup'));
+    expect(onRemove).toHaveBeenCalledWith('standup');
+  });
+
+  it('calls onSelect(id) when item clicked', () => {
+    const onSelect = vi.fn();
+    render(<ActiveRules items={items} onSelect={onSelect} />);
+    fireEvent.click(screen.getByTestId('active-rules-item-review'));
+    expect(onSelect).toHaveBeenCalledWith('review');
+  });
+
+  it('hides remove buttons when onRemove not provided', () => {
+    render(<ActiveRules items={items} />);
+    expect(screen.queryByTestId('active-rules-remove-standup')).toBeNull();
+    expect(screen.queryByTestId('active-rules-remove-review')).toBeNull();
+  });
+
+  it('shows color dot when color is set', () => {
+    render(<ActiveRules items={items} />);
+    const item = screen.getByTestId('active-rules-item-standup');
+    const dot = item.querySelector('.rbc-recurrence-active-rules-dot');
+    expect(dot).not.toBeNull();
+    // Second item has no color
+    const item2 = screen.getByTestId('active-rules-item-review');
+    const dot2 = item2.querySelector('.rbc-recurrence-active-rules-dot');
+    expect(dot2).toBeNull();
+  });
+
+  it('applies custom className', () => {
+    render(<ActiveRules items={items} className="my-list" />);
+    const root = screen.getByTestId('active-rules');
+    expect(root.className).toContain('my-list');
+  });
+
+  it('passes describeOptions to describe()', () => {
+    render(<ActiveRules items={items} describeOptions={{ includeStart: true }} />);
+    // With includeStart, both descriptions should include "starting"
+    expect(screen.getAllByText(/starting/)).toHaveLength(2);
+  });
+});
+
 describe('RecurrenceEditor', () => {
   it('renders the editor', () => {
     render(<RecurrenceEditor />);
@@ -119,13 +240,13 @@ describe('RecurrenceEditor', () => {
     expect(screen.getByTestId('weekday-picker')).toBeTruthy();
   });
 
-  it('calls onChange with rule and isValid', () => {
+  it('calls onChange with rule, isValid, and schedule', () => {
     const onChange = vi.fn();
     render(<RecurrenceEditor onChange={onChange} />);
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ period: 'week' }),
-      true,
-    );
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
+    expect(lastCall?.[0]).toEqual(expect.objectContaining({ period: 'week' }));
+    expect(lastCall?.[1]).toBe(true);
+    expect(lastCall?.[2]).toBeUndefined(); // no schedule by default
   });
 
   it('shows monthly options when period is month', () => {
@@ -145,10 +266,8 @@ describe('RecurrenceEditor', () => {
     render(<RecurrenceEditor onChange={onChange} />);
     const input = screen.getByTestId('interval-input');
     fireEvent.change(input, { target: { value: '3' } });
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ interval: 3 }),
-      expect.any(Boolean),
-    );
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
+    expect(lastCall?.[0]).toEqual(expect.objectContaining({ interval: 3 }));
   });
 
   it('switches end type to "on" and shows date input', () => {
@@ -172,11 +291,11 @@ describe('RecurrenceEditor', () => {
     fireEvent.change(endSelect, { target: { value: 'after' } });
     const input = screen.getByTestId('end-after-input');
     fireEvent.change(input, { target: { value: '5' } });
-    expect(onChange).toHaveBeenCalledWith(
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
+    expect(lastCall?.[0]).toEqual(
       expect.objectContaining({
-        end: expect.objectContaining({ type: 'after', occurrences: 5 }) as unknown,
+        end: expect.objectContaining({ type: 'after', occurrences: 5 }),
       }),
-      expect.any(Boolean),
     );
   });
 
@@ -185,10 +304,8 @@ describe('RecurrenceEditor', () => {
     render(<RecurrenceEditor onChange={onChange} />);
     const select = screen.getByTestId('period-select');
     fireEvent.change(select, { target: { value: 'day' } });
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ period: 'day' }),
-      expect.any(Boolean),
-    );
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
+    expect(lastCall?.[0]).toEqual(expect.objectContaining({ period: 'day' }));
   });
 
   it('renders custom actions via renderActions', () => {
@@ -210,17 +327,66 @@ describe('RecurrenceEditor', () => {
     expect(root.className).toContain('my-custom');
   });
 
+  it('shows yearly options when period is year', () => {
+    render(<RecurrenceEditor initialRule={{ period: 'year', yearly: { pattern: 'date' } }} />);
+    expect(screen.getByTestId('yearly-options-select')).toBeTruthy();
+  });
+
+  it('auto-initializes monthly config when switching from week to month', () => {
+    const onChange = vi.fn();
+    render(<RecurrenceEditor onChange={onChange} />);
+    const select = screen.getByTestId('period-select');
+    fireEvent.change(select, { target: { value: 'month' } });
+    // Should auto-set monthly config and be valid
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
+    expect(lastCall?.[0]?.monthly).toEqual({ pattern: 'day' });
+  });
+
+  it('auto-initializes yearly config when switching to year', () => {
+    const onChange = vi.fn();
+    render(<RecurrenceEditor onChange={onChange} />);
+    const select = screen.getByTestId('period-select');
+    fireEvent.change(select, { target: { value: 'year' } });
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
+    expect(lastCall?.[0]?.yearly).toEqual({ pattern: 'date' });
+  });
+
+  it('renders start time and end time inputs', () => {
+    render(<RecurrenceEditor />);
+    expect(screen.getByTestId('start-time-input')).toBeTruthy();
+    expect(screen.getByTestId('end-time-input')).toBeTruthy();
+  });
+
+  it('pre-populates schedule from initialSchedule', () => {
+    render(<RecurrenceEditor initialSchedule={{ startTime: '09:00', endTime: '10:30' }} />);
+    expect(screen.getByTestId('start-time-input')).toHaveValue('09:00');
+    expect(screen.getByTestId('end-time-input')).toHaveValue('10:30');
+  });
+
+  it('passes schedule through onChange', () => {
+    const onChange = vi.fn();
+    render(<RecurrenceEditor onChange={onChange} />);
+    fireEvent.change(screen.getByTestId('start-time-input'), { target: { value: '13:00' } });
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
+    expect(lastCall?.[2]).toEqual(expect.objectContaining({ startTime: '13:00' }));
+  });
+
+  it('passes schedule through onValidChange', () => {
+    const onValidChange = vi.fn();
+    render(<RecurrenceEditor onValidChange={onValidChange} initialSchedule={{ startTime: '14:00', endTime: '15:00' }} />);
+    // Trigger a change so the effect fires
+    fireEvent.change(screen.getByTestId('interval-input'), { target: { value: '2' } });
+    const lastCall = onValidChange.mock.calls[onValidChange.mock.calls.length - 1];
+    expect(lastCall?.[1]).toEqual({ startTime: '14:00', endTime: '15:00' });
+  });
+
   it('updates start date input', () => {
     const onChange = vi.fn();
     render(<RecurrenceEditor onChange={onChange} />);
     const input = screen.getByTestId('start-date-input');
     fireEvent.change(input, { target: { value: '2025-06-15' } });
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        startDate: expect.any(Date) as unknown,
-      }),
-      expect.any(Boolean),
-    );
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
+    expect(lastCall?.[0]?.startDate).toBeInstanceOf(Date);
   });
 
   it('updates end date when end type is on', () => {
@@ -230,12 +396,8 @@ describe('RecurrenceEditor', () => {
     fireEvent.change(screen.getByTestId('end-type-select'), { target: { value: 'on' } });
     // Update end date
     fireEvent.change(screen.getByTestId('end-on-input'), { target: { value: '2025-12-31' } });
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        end: expect.objectContaining({ type: 'on' }) as unknown,
-      }),
-      expect.any(Boolean),
-    );
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
+    expect(lastCall?.[0]?.end?.type).toBe('on');
   });
 
   it('switches back to never end type', () => {
@@ -245,11 +407,41 @@ describe('RecurrenceEditor', () => {
     fireEvent.change(screen.getByTestId('end-type-select'), { target: { value: 'after' } });
     // Switch back to never
     fireEvent.change(screen.getByTestId('end-type-select'), { target: { value: 'never' } });
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        end: expect.objectContaining({ type: 'never' }) as unknown,
-      }),
-      expect.any(Boolean),
-    );
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
+    expect(lastCall?.[0]?.end?.type).toBe('never');
+  });
+
+  it('hides weekday picker when showWeekdayPicker=false', () => {
+    render(<RecurrenceEditor showWeekdayPicker={false} />);
+    // Default period is week, but picker should be hidden
+    expect(screen.queryByTestId('weekday-picker')).toBeNull();
+  });
+
+  it('hides monthly options when showMonthlyOptions=false', () => {
+    render(<RecurrenceEditor initialRule={{ period: 'month', monthly: { pattern: 'day' } }} showMonthlyOptions={false} />);
+    expect(screen.queryByTestId('monthly-options-select')).toBeNull();
+  });
+
+  it('hides yearly options when showYearlyOptions=false', () => {
+    render(<RecurrenceEditor initialRule={{ period: 'year', yearly: { pattern: 'date' } }} showYearlyOptions={false} />);
+    expect(screen.queryByTestId('yearly-options-select')).toBeNull();
+  });
+
+  it('hides schedule inputs when showSchedule=false', () => {
+    render(<RecurrenceEditor showSchedule={false} />);
+    expect(screen.queryByTestId('start-time-input')).toBeNull();
+    expect(screen.queryByTestId('end-time-input')).toBeNull();
+  });
+
+  it('hides description when showDescription=false', () => {
+    render(<RecurrenceEditor showDescription={false} />);
+    expect(screen.queryByTestId('description')).toBeNull();
+  });
+
+  it('shows all sections by default', () => {
+    render(<RecurrenceEditor />);
+    expect(screen.getByTestId('weekday-picker')).toBeTruthy();
+    expect(screen.getByTestId('start-time-input')).toBeTruthy();
+    expect(screen.getByTestId('description')).toBeTruthy();
   });
 });
