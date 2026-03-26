@@ -1,6 +1,6 @@
 {
   "name": "rbc-recurrence",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "The missing recurrence plugin for React Big Calendar — expand recurring events into the visible range with zero dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",
