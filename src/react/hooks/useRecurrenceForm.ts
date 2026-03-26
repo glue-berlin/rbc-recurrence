@@ -35,8 +35,23 @@ type Action =
 
 function reducer(state: RecurrenceFormState, action: Action): RecurrenceFormState {
   switch (action.type) {
-    case 'SET_FIELD':
-      return { ...state, [action.field]: action.value };
+    case 'SET_FIELD': {
+      const next = { ...state, [action.field]: action.value };
+      // Auto-initialize period-specific config when period changes
+      if (action.field === 'period') {
+        const period = action.value as RecurrenceRule['period'];
+        if (period === 'week' && !next.weekly) {
+          next.weekly = { days: [state.startDate.getUTCDay()] };
+        }
+        if (period === 'month' && !next.monthly) {
+          next.monthly = { pattern: 'day' };
+        }
+        if (period === 'year' && !next.yearly) {
+          next.yearly = { pattern: 'date' };
+        }
+      }
+      return next;
+    }
     case 'RESET':
       return action.state;
     default:

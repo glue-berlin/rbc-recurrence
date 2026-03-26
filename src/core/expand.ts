@@ -48,15 +48,24 @@ export function expand(rule: RecurrenceRule, options: ExpandOptions): ExpandedDa
     )),
   };
 
+  // Merge rule-level excludeDates with options-level excludeDates
+  const mergedOptions: ExpandOptions =
+    rule.excludeDates && rule.excludeDates.length > 0
+      ? {
+          ...options,
+          excludeDates: [...(rule.excludeDates), ...(options.excludeDates ?? [])],
+        }
+      : options;
+
   switch (rule.period) {
     case 'day':
-      return expandDaily(normalisedRule, options, 0);
+      return expandDaily(normalisedRule, mergedOptions, 0);
     case 'week':
-      return expandWeekly(normalisedRule, options, 0);
+      return expandWeekly(normalisedRule, mergedOptions, 0);
     case 'month':
-      return expandMonthly(normalisedRule, options, 0);
+      return expandMonthly(normalisedRule, mergedOptions, 0);
     case 'year':
-      return expandYearly(normalisedRule, options, 0);
+      return expandYearly(normalisedRule, mergedOptions, 0);
     default: {
       const _exhaustive: never = rule.period;
       throw new Error(`Unsupported period: ${String(_exhaustive)}`);

@@ -81,11 +81,16 @@ export function useRecurringEvents<TData = Record<string, unknown>>(
     const rangeStart = addDays(visibleRange.start, -bufferDays);
     const rangeEnd = addDays(visibleRange.end, bufferDays);
 
-    const expandOptions: ExpandOptions = { rangeStart, rangeEnd, maxOccurrences };
-
     const results: RBCEvent<TData>[] = [];
 
     for (const recurringEvent of recurringEvents) {
+      const eventExcludes = recurringEvent.excludeDates;
+      const expandOptions: ExpandOptions = {
+        rangeStart,
+        rangeEnd,
+        maxOccurrences,
+        ...(eventExcludes ? { excludeDates: eventExcludes } : {}),
+      };
       const occurrences = expand(recurringEvent.rule, expandOptions);
 
       for (const occurrence of occurrences) {

@@ -36,10 +36,24 @@ export function fromRRuleString(input: string): RecurrenceRule {
   const now = new Date();
   let startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   let rruleLine = '';
+  const excludeDates: Date[] = [];
 
   for (const line of lines) {
-    if (line.startsWith('DTSTART:')) {
-      startDate = parseICalDate(line.slice(8));
+    if (line.startsWith('DTSTART')) {
+      // Handle DTSTART:, DTSTART;TZID=...:, DTSTART;VALUE=DATE:, etc.
+      const colonIdx = line.indexOf(':');
+      if (colonIdx !== -1) {
+        startDate = parseICalDate(line.slice(colonIdx + 1));
+      }
+    } else if (line.startsWith('EXDATE')) {
+      const colonIdx = line.indexOf(':');
+      if (colonIdx !== -1) {
+        const dates = line.slice(colonIdx + 1).split(',');
+        for (const dateStr of dates) {
+          const trimmed = dateStr.trim();
+          if (trimmed) excludeDates.push(parseICalDate(trimmed));
+        }
+      }
     } else if (line.startsWith('RRULE:')) {
       rruleLine = line.slice(6);
     } else if (!line.includes(':')) {
@@ -122,6 +136,7 @@ export function fromRRuleString(input: string): RecurrenceRule {
   if (weekly) rule.weekly = weekly;
   if (monthly) rule.monthly = monthly;
   if (yearly) rule.yearly = yearly;
+  if (excludeDates.length > 0) rule.excludeDates = excludeDates;
 
   return rule;
 }

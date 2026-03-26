@@ -12,22 +12,31 @@
  * />
  */
 
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { useRecurrenceForm } from '../hooks/useRecurrenceForm.js';
 import { WeekdayPicker } from './WeekdayPicker.js';
 import { MonthlyOptions } from './MonthlyOptions.js';
-import type { RecurrenceRule, MonthlyPattern } from '../../core/types.js';
+import { YearlyOptions } from './YearlyOptions.js';
+import type { RecurrenceRule, MonthlyPattern, YearlyPattern } from '../../core/types.js';
+
+/** Time-of-day schedule for each occurrence. "HH:mm" in 24-hour format. */
+export interface Schedule {
+  startTime: string;
+  endTime: string;
+}
 
 export interface RecurrenceEditorProps {
   /** Pre-populate with an existing rule. */
   initialRule?: Partial<RecurrenceRule>;
+  /** Pre-populate the time-of-day schedule. */
+  initialSchedule?: Schedule;
   /**
    * Called on every change, even when the rule is incomplete/invalid.
    * Use `onValidChange` if you only want valid rules.
    */
-  onChange?: (rule: Partial<RecurrenceRule>, isValid: boolean) => void;
+  onChange?: (rule: Partial<RecurrenceRule>, isValid: boolean, schedule?: Schedule) => void;
   /** Called only when the rule passes validation. */
-  onValidChange?: (rule: RecurrenceRule) => void;
+  onValidChange?: (rule: RecurrenceRule, schedule?: Schedule) => void;
   /** Extra className for the root container. */
   className?: string;
   /** Render a custom submit/save button at the bottom. */
@@ -35,7 +44,18 @@ export interface RecurrenceEditorProps {
     isValid: boolean;
     description: string;
     rule: Partial<RecurrenceRule>;
+    schedule: Schedule | undefined;
   }) => React.ReactNode;
+  /** Show the weekday picker when period is 'week'. @default true */
+  showWeekdayPicker?: boolean;
+  /** Show the monthly pattern selector when period is 'month'. @default true */
+  showMonthlyOptions?: boolean;
+  /** Show the yearly pattern selector when period is 'year'. @default true */
+  showYearlyOptions?: boolean;
+  /** Show the start/end time inputs. @default true */
+  showSchedule?: boolean;
+  /** Show the human-readable description. @default true */
+  showDescription?: boolean;
 }
 
 const PERIOD_LABELS: Record<RecurrenceRule['period'], string> = {
@@ -57,10 +77,16 @@ const END_LABELS: Record<string, string> = {
  */
 export function RecurrenceEditor({
   initialRule,
+  initialSchedule,
   onChange,
   onValidChange,
   className,
   renderActions,
+  showWeekdayPicker = true,
+  showMonthlyOptions = true,
+  showYearlyOptions = true,
+  showSchedule = true,
+  showDescription = true,
 }: RecurrenceEditorProps) {
   const formOptions = useMemo(
     () => (initialRule ? { initialRule } : {}),
@@ -68,15 +94,17 @@ export function RecurrenceEditor({
   );
   const { rule, setField, isValid, validation, description } = useRecurrenceForm(formOptions);
 
+  const [schedule, setSchedule] = useState<Schedule | undefined>(initialSchedule);
+
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const onValidChangeRef = useRef(onValidChange);
   onValidChangeRef.current = onValidChange;
 
   useEffect(() => {
-    onChangeRef.current?.(rule, isValid);
-    if (isValid) onValidChangeRef.current?.(rule as RecurrenceRule);
-  }, [rule, isValid]);
+    onChangeRef.current?.(rule, isValid, schedule);
+    if (isValid) onValidChangeRef.current?.(rule as RecurrenceRule, schedule);
+  }, [rule, isValid, schedule]);
 
   const startDate = rule.startDate ?? new Date();
 
@@ -87,7 +115,7 @@ export function RecurrenceEditor({
     >
       {/* Start date */}
       <div className="rbc-recurrence-field">
-        <label className="rbc-recurrence-label">Start date</label>
+        <label className="rbc-recurrence-label">Starts on</label>
         <input
           type="date"
           className="rbc-recurrence-input"
@@ -99,6 +127,40 @@ export function RecurrenceEditor({
           data-testid="start-date-input"
         />
       </div>
+
+      {/* Schedule: start time / end time */}
+      {showSchedule && (
+        <div className="rbc-recurrence-field rbc-recurrence-field--inline">
+          <label className="rbc-recurrence-label">From</label>
+          <input
+            type="time"
+            className="rbc-recurrence-input"
+            value={schedule?.startTime ?? ''}
+            onChange={(e) => {
+              const startTime = e.target.value;
+              setSchedule((prev) => ({
+                startTime,
+                endTime: prev?.endTime ?? '',
+              }));
+            }}
+            data-testid="start-time-input"
+          />
+          <label className="rbc-recurrence-label">To</label>
+          <input
+            type="time"
+            className="rbc-recurrence-input"
+            value={schedule?.endTime ?? ''}
+            onChange={(e) => {
+              const endTime = e.target.value;
+              setSchedule((prev) => ({
+                startTime: prev?.startTime ?? '',
+                endTime,
+              }));
+            }}
+            data-testid="end-time-input"
+          />
+        </div>
+      )}
 
       {/* Repeat every */}
       <div className="rbc-recurrence-field rbc-recurrence-field--inline">
@@ -131,7 +193,7 @@ export function RecurrenceEditor({
       </div>
 
       {/* Weekly days */}
-      {rule.period === 'week' && (
+      {showWeekdayPicker && rule.period === 'week' && (
         <div className="rbc-recurrence-field">
           <label className="rbc-recurrence-label">On days</label>
           <WeekdayPicker
@@ -142,13 +204,26 @@ export function RecurrenceEditor({
       )}
 
       {/* Monthly pattern */}
-      {rule.period === 'month' && (
+      {showMonthlyOptions && rule.period === 'month' && (
         <div className="rbc-recurrence-field">
           <label className="rbc-recurrence-label">Pattern</label>
           <MonthlyOptions
             startDate={startDate}
             value={rule.monthly?.pattern}
             onChange={(pattern: MonthlyPattern) => setField('monthly', { pattern })}
+            asSelect
+          />
+        </div>
+      )}
+
+      {/* Yearly pattern */}
+      {showYearlyOptions && rule.period === 'year' && (
+        <div className="rbc-recurrence-field">
+          <label className="rbc-recurrence-label">Pattern</label>
+          <YearlyOptions
+            startDate={startDate}
+            value={rule.yearly?.pattern}
+            onChange={(pattern: YearlyPattern) => setField('yearly', { pattern })}
             asSelect
           />
         </div>
@@ -227,14 +302,14 @@ export function RecurrenceEditor({
       )}
 
       {/* Human-readable description */}
-      {isValid && description && (
+      {showDescription && isValid && description && (
         <p className="rbc-recurrence-description" data-testid="description">
           {description}
         </p>
       )}
 
       {/* Custom actions slot */}
-      {renderActions?.({ isValid, description, rule })}
+      {renderActions?.({ isValid, description, rule, schedule })}
     </div>
   );
 }

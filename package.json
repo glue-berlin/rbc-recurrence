@@ -1,6 +1,6 @@
 {
   "name": "rbc-recurrence",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "The missing recurrence plugin for React Big Calendar — expand recurring events into the visible range with zero dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -40,9 +40,15 @@
     "recurrence",
     "recurring-events",
     "rrule",
+    "rrule-alternative",
     "calendar",
     "react",
-    "scheduling"
+    "scheduling",
+    "icalendar",
+    "rfc5545",
+    "react-big-calendar-plugin",
+    "recurring-events-react",
+    "exdate"
   ],
   "author": "Glue Tech LLC <glue@glue.berlin> (https://glue.berlin)",
   "license": "MIT",

@@ -11,6 +11,10 @@
 export { expand } from './core/expand.js';
 export { validate } from './core/validate.js';
 export { describe } from './core/describe.js';
+export type { DescribeOptions } from './core/describe.js';
+export { createRule } from './core/createRule.js';
+export type { CreateRuleOptions } from './core/createRule.js';
+export { nextOccurrence } from './core/nextOccurrence.js';
 
 // RRULE interop
 export { toRRuleString } from './rrule/toRRule.js';

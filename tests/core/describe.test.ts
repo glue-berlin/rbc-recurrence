@@ -199,4 +199,41 @@ describe('describe()', () => {
     };
     expect(describeRule(rule)).toBe('Every 2 years on December 25th');
   });
+
+  it('includeStart appends start date', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-06-01'),
+      interval: 2,
+      period: 'week',
+      end: { type: 'never' },
+      weekly: { days: [1, 3, 5] },
+    };
+    expect(describeRule(rule, { includeStart: true })).toBe(
+      'Every 2 weeks on Mon, Wed, Fri, starting June 1, 2024',
+    );
+  });
+
+  it('includeStart with end condition puts start before end', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-01-15'),
+      interval: 1,
+      period: 'month',
+      end: { type: 'on', date: d('2024-12-31') },
+      monthly: { pattern: 'day' },
+    };
+    expect(describeRule(rule, { includeStart: true })).toBe(
+      'Every month on the 15th, starting January 15, 2024, until December 31, 2024',
+    );
+  });
+
+  it('includeStart defaults to false', () => {
+    const rule: RecurrenceRule = {
+      startDate: d('2024-06-01'),
+      interval: 1,
+      period: 'day',
+      end: { type: 'never' },
+    };
+    expect(describeRule(rule)).toBe('Every day');
+    expect(describeRule(rule, {})).toBe('Every day');
+  });
 });
