@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -376,7 +377,7 @@ describe('RecurrenceEditor', () => {
     render(<RecurrenceEditor onValidChange={onValidChange} initialSchedule={{ startTime: '14:00', endTime: '15:00' }} />);
     // Trigger a change so the effect fires
     fireEvent.change(screen.getByTestId('interval-input'), { target: { value: '2' } });
-    const lastCall = onValidChange.mock.calls[onValidChange.mock.calls.length - 1];
+const lastCall = onValidChange.mock.calls[onValidChange.mock.calls.length - 1];
     expect(lastCall?.[1]).toEqual({ startTime: '14:00', endTime: '15:00' });
   });
 
