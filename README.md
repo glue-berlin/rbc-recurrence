@@ -52,20 +52,15 @@ const { events, onRangeChange } = useRecurringEvents(recurringEvents);
 
 ### rbc-recurrence vs rrule
 
-| Feature | rbc-recurrence | rrule |
-|---------|---------------|-------|
-| Bundle size (gzip) | **3.7 KB** | 43 KB |
-| Dependencies | **Zero** | luxon (optional) |
-| React Big Calendar hooks | **`useRecurringEvents`, `useRecurrenceForm`** | None |
-| Pre-built UI components | **`RecurrenceEditor`, `ActiveRules`, `WeekdayPicker`, `MonthlyOptions`, `YearlyOptions`** | None |
-| Smart range expansion | **Built-in** (only visible dates) | Manual |
-| Rule builder API | **`createRule()`** | `new RRule()` |
-| RRULE round-trip (RFC 5545) | Yes | Yes |
-| EXDATE support | Yes | Yes |
-| Human-readable descriptions | **`describe()`** | `toText()` |
-| `nextOccurrence()` | Yes | `after()` |
-| Timezone support | UTC (TZID planned) | Yes |
-| BYSETPOS / WKST | Planned | Yes |
+| | rbc-recurrence | rrule |
+|---|---|---|
+| Bundle size | 3.7 KB | 43 KB |
+| Dependencies | Zero | luxon (optional) |
+| RBC hooks | `useRecurringEvents`, `useRecurrenceForm` | — |
+| UI components | `RecurrenceEditor`, `ActiveRules`, + 3 more | — |
+| Range expansion | Automatic (visible dates only) | Manual |
+| RRULE + EXDATE | Yes | Yes |
+| Timezone / BYSETPOS | Planned | Yes |
 
 **Use `rbc-recurrence` when:** you're building with React Big Calendar and want a drop-in solution with UI components.
 
