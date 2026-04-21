@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] — 2026-04-21
+
+### Fixed
+- Republish with a clean production build — previous artifacts could contain `react/jsx-dev-runtime` imports that threw `jsxDEV is not a function` in consumers' production bundles
+
+## [0.2.1] — 2026-03-26
+
+### Changed
+- Simplified the README comparison table
+
 ## [0.2.0] — 2026-03-26
 
 ### Added
